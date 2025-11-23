@@ -3,6 +3,7 @@ package enterprises.iwakura.akasha.service;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -67,10 +68,10 @@ public class DataSourceService {
                     ctx.contentType("application/octet-stream");
                     ctx.header("Content-Disposition", "attachment; filename=\"" + readContext.getFileName() + "\"");
                     ctx.header("Content-Length", String.valueOf(readContext.getFileSizeBytes()));
+                    ctx.header("Content-Encoding", "identity");
                     ctx.result(readContext.getInputStream());
                     ctx.status(200);
-                    log.info("[{}] [{}] Downloaded file {} of size {} bytes", dataSourceName, ctx.ip(), filePath,
-                        readContext.getFileSizeBytes());
+                    log.info("[{}] [{}] Downloaded file {} of size {} bytes", dataSourceName, ctx.ip(), filePath, readContext.getFileSizeBytes());
                 } catch (HandledException exception) {
                     ctx.status(400).result("Error reading from data source: " + exception.getMessage());
                     log.warn("Handled error reading data source: {} with file path: {}: {}", dataSourceName,
@@ -98,7 +99,7 @@ public class DataSourceService {
                 var handler = optionalDataSourceHandler.get();
 
                 try {
-                    var fileSizeBytes = inputStream.available();
+                    var fileSizeBytes = Long.parseLong(ctx.req().getHeader("Content-Length"));
                     log.info("[{}] [{}] Uploading file of size {} to path {}", dataSourceName, ctx.ip(), fileSizeBytes, filePath);
                     handler.write(dataSource, filePath, inputStream);
                     ctx.status(200).result("File written successfully");
