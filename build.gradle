@@ -1,0 +1,102 @@
+plugins {
+    id 'java'
+    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id 'jacoco'
+    id 'jacoco-report-aggregation'
+    id 'enterprises.iwakura.amber' version '1.0.0'
+}
+
+group = 'enterprises.iwakura'
+version = '1.0.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // Personal libraries
+    implementation 'enterprises.iwakura:amber-core:1.0.2'
+    amber 'enterprises.iwakura:ganyu:1.0.0'
+    amber 'enterprises.iwakura:keqing-core:1.1.1'
+    amber 'enterprises.iwakura:keqing-gson:1.1.1'
+    amber 'enterprises.iwakura:keqing-snakeyaml:1.1.1'
+    amber 'enterprises.iwakura:sigewine-core:2.3.1'
+    amber 'enterprises.iwakura:irminsul:0.2.0'
+    amber 'dev.mayuna:mayus-library:3.1'
+    amber 'dev.mayuna:mayus-json-utilities:2.1'
+
+    // Javalin
+    amber 'io.javalin:javalin:6.6.0'
+
+    // SSHJ
+    amber 'com.hierynomus:sshj:0.40.0'
+
+    // JWT
+    amber 'io.jsonwebtoken:jjwt-api:0.12.6'
+    amber 'io.jsonwebtoken:jjwt-gson:0.12.6'
+    amber 'io.jsonwebtoken:jjwt-impl:0.12.6'
+
+    // GSON, Snakeyaml
+    amber 'com.google.code.gson:gson:2.13.1'
+    amber 'org.yaml:snakeyaml:2.4'
+
+    // Database - Hibernate, PostgreSQL
+    amber 'org.postgresql:postgresql:42.7.6'
+    compileOnly platform("org.hibernate.orm:hibernate-platform:7.0.0.CR1")
+    amber "org.hibernate.orm:hibernate-core"
+    amber 'org.hibernate.orm:hibernate-processor:7.0.0.CR1'
+    annotationProcessor 'org.hibernate.orm:hibernate-processor:7.0.0.CR1'
+    amber "org.hibernate.orm:hibernate-hikaricp"
+    amber "jakarta.transaction:jakarta.transaction-api"
+    amber 'com.fasterxml.jackson.core:jackson-databind:2.15.3'
+
+    // Liquibase
+    amber 'org.liquibase:liquibase-core:4.31.1'
+    amber 'com.mattbertolini:liquibase-slf4j:5.1.0'
+
+    // HikariCP
+    amber 'com.zaxxer:HikariCP:5.1.0'
+
+    // Mapstruct
+    amber "org.mapstruct:mapstruct:1.6.3"
+    annotationProcessor "org.mapstruct:mapstruct-processor:1.6.3"
+    annotationProcessor "org.projectlombok:lombok-mapstruct-binding:0.2.0"
+
+    // Guava
+    amber 'com.google.guava:guava:33.4.8-jre'
+
+    // SLF4J
+    amber 'org.apache.logging.log4j:log4j-slf4j2-impl:2.23.1'
+    amber 'org.apache.logging.log4j:log4j-api:2.23.1'
+    amber 'org.apache.logging.log4j:log4j-core:2.23.1'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.+'
+    annotationProcessor 'org.projectlombok:lombok:1.18.+'
+    testCompileOnly 'org.projectlombok:lombok:1.18.+'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.+'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+shadowJar {
+    archiveBaseName.set('akasha')
+
+    manifest {
+        attributes 'Main-Class': 'enterprises.iwakura.akasha.AmberBootstrap'
+    }
+
+    archiveVersion.set(version)
+    archiveClassifier.set('all')
+    destinationDirectory = file("$buildDir/libs")
+}
+
+// UTF-8
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}

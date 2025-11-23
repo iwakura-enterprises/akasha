@@ -1,0 +1,23 @@
+{
+  "javalin": {
+    "port": 7000
+  },
+  "sources": [
+    {
+      "type": "SFTP",
+      "hostname": "",
+      "port": 22,
+      "username": "",
+      "password":  "",
+      "permission": {
+        "entries": [
+          {
+            "path": "/a/some-file.txt",
+            "write": false,
+            "tokens": []
+          }
+        ]
+      }
+    }
+  ]
+}
