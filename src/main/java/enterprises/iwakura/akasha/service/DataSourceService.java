@@ -11,7 +11,9 @@ import enterprises.iwakura.akasha.AkashaConfiguration;
 import enterprises.iwakura.akasha.exception.HandledException;
 import enterprises.iwakura.akasha.object.DataSource;
 import enterprises.iwakura.akasha.object.DataSourceType;
+import enterprises.iwakura.akasha.object.ReadContext;
 import enterprises.iwakura.akasha.service.handler.DataSourceHandler;
+import enterprises.iwakura.akasha.util.ContentTypeResolver;
 import enterprises.iwakura.sigewine.core.annotations.Bean;
 import enterprises.iwakura.sigewine.core.utils.collections.TypedArrayList;
 import io.javalin.http.Context;
@@ -25,6 +27,7 @@ public class DataSourceService {
 
     private final AkashaConfiguration configuration;
     private final PermissionService permissionService;
+    private final FileCacheService fileCacheService;
 
     @Bean
     private final List<DataSourceHandler> dataSourceHandlers = new TypedArrayList<>(DataSourceHandler.class);
@@ -62,16 +65,25 @@ public class DataSourceService {
 
             if (optionalDataSourceHandler.isPresent()) {
                 var handler = optionalDataSourceHandler.get();
+                ReadContext readContext;
 
                 try {
-                    var readContext = handler.read(dataSource, filePath);
-                    ctx.contentType("application/octet-stream");
-                    ctx.header("Content-Disposition", "attachment; filename=\"" + readContext.getFileName() + "\"");
+                    var fileCacheReadContext = fileCacheService.getFileInputStreamFromCache(dataSource, filePath);
+                    if (fileCacheReadContext.isPresent()) {
+                        readContext = fileCacheReadContext.get();
+                        log.info("[{}] [{}] Loading cache file {} of size {} bytes", dataSourceName, ctx.ip(), filePath, readContext.getFileSizeBytes());
+                    } else {
+                        readContext = handler.read(dataSource, filePath);
+                        log.info("[{}] [{}] Downloading file {} of size {} bytes", dataSourceName, ctx.ip(), filePath, readContext.getFileSizeBytes());
+                        readContext.setInputStream(fileCacheService.cacheFileInputStream(dataSource, filePath, readContext));
+                    }
+
+                    ctx.contentType(ContentTypeResolver.getContentType(readContext.getFileName()));
+                    ctx.header("Content-Disposition", "inline; filename=\"" + readContext.getFileName() + "\"");
                     ctx.header("Content-Length", String.valueOf(readContext.getFileSizeBytes()));
                     ctx.header("Content-Encoding", "identity");
                     ctx.result(readContext.getInputStream());
                     ctx.status(200);
-                    log.info("[{}] [{}] Downloaded file {} of size {} bytes", dataSourceName, ctx.ip(), filePath, readContext.getFileSizeBytes());
                 } catch (HandledException exception) {
                     ctx.status(400).result("Error reading from data source: " + exception.getMessage());
                     log.warn("Handled error reading data source: {} with file path: {}: {}", dataSourceName,

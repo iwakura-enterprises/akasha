@@ -78,7 +78,7 @@ public class SftpDataSourceHandler implements DataSourceHandler<SftpDataSource>,
 
     @SneakyThrows
     private SftpContext getOrConnect(SftpDataSource dataSource) {
-        return clientMap.get(dataSource, () -> {
+        var ctx = clientMap.get(dataSource, () -> {
             try {
                 log.info("Connecting to SFTP server {}:{} for data source {}", dataSource.getHostname(), dataSource.getPort(), dataSource.getName());
                 var sshClient = new SSHClient();
@@ -91,6 +91,14 @@ public class SftpDataSourceHandler implements DataSourceHandler<SftpDataSource>,
                 throw new RuntimeException("Failed to connect to SFTP server", e);
             }
         });
+
+        if (!ctx.getSshClient().isConnected()) {
+            log.warn("SFTP connection for data source {} is not connected. Reconnecting...", dataSource.getName());
+            clientMap.invalidate(dataSource);
+            return getOrConnect(dataSource);
+        }
+
+        return ctx;
     }
 
     @Override

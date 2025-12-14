@@ -56,12 +56,24 @@ public class AkashaConfiguration {
     public static class Config {
 
         private Javalin javalin = new Javalin();
+        private FileCache fileCache = new FileCache();
         private List<DataSource> sources = new ArrayList<>();
 
         @Data
         public static class Javalin {
 
             private int port = 7000;
+        }
+
+        @Data
+        public static class FileCache {
+
+            private boolean enabled = true;
+            private boolean resetTtlOnAccess = true;
+            private String directory = "./file_cache/";
+            private long ttlSeconds = 3600; // 1 hour
+            private long maxSizePerFileBytes = 10 * 1024 * 1024; // 10 MB
+            private long maxTotalSizeBytes = 1000 * 1024 * 1024; // 1000 MB
         }
     }
 }
