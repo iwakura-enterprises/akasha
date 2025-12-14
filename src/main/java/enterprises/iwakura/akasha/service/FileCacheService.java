@@ -1,5 +1,6 @@
 package enterprises.iwakura.akasha.service;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -211,12 +212,20 @@ public class FileCacheService {
         return readContext.getInputStream();
     }
 
-    @RequiredArgsConstructor
+    /**
+     * InputStream that caches data to a file while being read.
+     */
     public static class CachingInputStream extends InputStream {
 
         private final InputStream originalInputStream;
         private final OutputStream fileCacheOutputStream;
         private final Runnable onFullyDownloaded;
+
+        public CachingInputStream(InputStream originalInputStream, OutputStream fileCacheOutputStream, Runnable onFullyDownloaded) {
+            this.originalInputStream = originalInputStream;
+            this.fileCacheOutputStream = new BufferedOutputStream(fileCacheOutputStream);
+            this.onFullyDownloaded = onFullyDownloaded;
+        }
 
         @Override
         public int read() throws IOException {
@@ -227,6 +236,27 @@ public class FileCacheService {
                 closeStreams();
             }
             return byteRead;
+        }
+
+        @Override
+        public int read(byte[] b, int off, int len) throws IOException {
+            int bytesRead = originalInputStream.read(b, off, len);
+            if (bytesRead != -1) {
+                fileCacheOutputStream.write(b, off, bytesRead);
+            } else {
+                closeStreams();
+            }
+            return bytesRead;
+        }
+
+        @Override
+        public void close() throws IOException {
+            try {
+                fileCacheOutputStream.close();
+            } catch (IOException e) {
+                log.error("Failed to close file cache output stream during close", e);
+            }
+            originalInputStream.close();
         }
 
         private void closeStreams() {
