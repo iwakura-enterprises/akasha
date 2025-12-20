@@ -82,6 +82,7 @@ public class DataSourceService {
                     ctx.header("Content-Disposition", "inline; filename=\"" + readContext.getFileName() + "\"");
                     ctx.header("Content-Length", String.valueOf(readContext.getFileSizeBytes()));
                     ctx.header("Content-Encoding", "identity");
+                    ctx.header("Cache-Control", "public, max-age=3600");
                     ctx.result(readContext.getInputStream());
                     ctx.status(200);
                 } catch (HandledException exception) {

@@ -68,7 +68,6 @@ public class FileCacheService {
 
             try {
                 if (Files.exists(fileCachePath)) {
-                    log.info("Cache hit for file: {} from data source: {}", filePath, dataSource.getName());
                     fileCacheContext.updateLastAccessTime();
                     var fileInputStream = Files.newInputStream(fileCachePath);
                     var fileName = Path.of(filePath).getFileName().toString();
