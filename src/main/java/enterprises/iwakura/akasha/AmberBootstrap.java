@@ -7,6 +7,8 @@ import enterprises.iwakura.amber.BootstrapOptions;
 
 public class AmberBootstrap {
 
+    public static final long STARTUP_TIME = System.currentTimeMillis();
+
     public static void main(String[] args) throws IOException {
         System.out.println("Bootstrapping Akasha...");
         Amber amber = Amber.classLoader();

@@ -6,13 +6,15 @@ import enterprises.iwakura.akasha.command.StopCommand;
 import enterprises.iwakura.ganyu.Ganyu;
 import enterprises.iwakura.ganyu.GanyuCommand;
 import enterprises.iwakura.sigewine.core.annotations.Bean;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Bean
+@RequiredArgsConstructor
 public class GanyuTreatment {
 
-    private final List<GanyuCommand> commands = List.of(new StopCommand());
+    private final List<GanyuCommand> commands;
 
     @Bean
     public Ganyu ganyu() {

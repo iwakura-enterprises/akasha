@@ -24,6 +24,8 @@ public class DataSourceController {
         javalin.get("/data-source/{dataSourceName}/<filepath>", ctx -> {
             String dataSourceName = ctx.pathParam("dataSourceName");
             String filePath = ctx.pathParam("filepath");
+
+            // SECURITY: Must normalize the file path to prevent directory traversal attacks
             dataSourceService.read(dataSourceName, PathUtils.normalizePath(filePath), ctx);
         });
 
@@ -38,6 +40,7 @@ public class DataSourceController {
             }
 
             try (InputStream inputStream = file.content()) {
+                // SECURITY: Must normalize the file path to prevent directory traversal attacks
                 dataSourceService.write(dataSourceName, PathUtils.normalizePath(filePath), inputStream, ctx);
             }
         });

@@ -27,9 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 public class FileCacheService {
 
     private final List<FileCacheContext> fileCacheContexts = Collections.synchronizedList(new ArrayList<>());
+    private final Timer cacheCleanupTimer = new Timer("FileCacheCleanupTimer");
 
     private final AkashaConfiguration configuration;
-    private final Timer cacheCleanupTimer = new Timer("FileCacheCleanupTimer");
 
     public void init() {
         log.info("Initializing FileCacheService...");
@@ -113,7 +113,7 @@ public class FileCacheService {
                     }
                 } else {
                     var fileCacheContext = optionalFileCacheContext.get();
-                    if (fileCacheContext.shouldDelete(configuration.get().getFileCache().getTtlSeconds())) {
+                    if (fileCacheContext.shouldDelete(configuration.getFileCache().getTtlSeconds())) {
                         log.info("Removing expired cache file: {}", fileCachePath.toAbsolutePath());
                         try {
                             Files.deleteIfExists(fileCachePath);
@@ -154,7 +154,7 @@ public class FileCacheService {
      * @return Path to the cache directory
      */
     private Path prepareCacheDirectory() {
-        var cacheDirectoryPath = Path.of(configuration.get().getFileCache().getDirectory());
+        var cacheDirectoryPath = Path.of(configuration.getFileCache().getDirectory());
 
         try {
             Files.createDirectories(cacheDirectoryPath);
@@ -175,7 +175,7 @@ public class FileCacheService {
      * @return InputStream that caches data while being read
      */
     public InputStream cacheFileInputStream(DataSource dataSource, String filePath, ReadContext readContext) {
-        var fileCacheConfiguration = configuration.get().getFileCache();
+        var fileCacheConfiguration = configuration.getFileCache();
 
         // File cache enabled?
         if (fileCacheConfiguration.isEnabled()) {

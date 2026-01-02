@@ -1,0 +1,171 @@
+plugins {
+    id 'java'
+    id 'java-library'
+    id 'signing'
+    id 'maven-publish'
+    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id 'jacoco'
+    id 'jacoco-report-aggregation'
+
+    id "tech.medivh.plugin.publisher" version "1.2.3"
+}
+
+group = 'enterprises.iwakura'
+version = '1.0.0'
+def kiraraVersion = '1.4.1'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation "enterprises.iwakura:kirara-core:${kiraraVersion}"
+
+    testImplementation "enterprises.iwakura:kirara-gson:${kiraraVersion}"
+    testImplementation 'com.google.code.gson:gson:2.13.1'
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok:1.18.+'
+    annotationProcessor 'org.projectlombok:lombok:1.18.+'
+    testCompileOnly 'org.projectlombok:lombok:1.18.+'
+    testAnnotationProcessor 'org.projectlombok:lombok:1.18.+'
+
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+shadowJar {
+    destinationDirectory = file("../build/libs")
+}
+
+jar {
+    destinationDirectory = file("../build/libs")
+}
+
+task javadocJar(type: Jar) {
+    from javadoc
+    archiveClassifier.set('javadoc')
+    destinationDirectory = file("../build/libs")
+}
+
+task sourcesJar(type: Jar) {
+    from sourceSets.main.allSource
+    archiveClassifier.set('sources')
+    destinationDirectory = file("../build/libs")
+}
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+}
+
+task publishCloseAndRelease() {
+    dependsOn 'cleanBuildMedivhMavenRepo'
+    dependsOn 'uploadToSonatype'
+    dependsOn 'publishDeployment'
+}
+
+jacocoTestReport {
+    reports {
+        csv.required.set(true)
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+    withJavadocJar()
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile) {
+    options.release = 8
+}
+
+// == Maven publishing == //
+
+medivhPublisher {
+    groupId = project.group.toString()
+    artifactId = project.name
+    version = project.version.toString()
+    pom {
+        name = "Akasha API Kirara"
+        description = "Akasha API wrapper using Kirara"
+        url = "https://github.com/iwakura-enterprises/akasha"
+        licenses {
+            license {
+                name = "The MIT License"
+                url = "https://opensource.org/license/mit"
+            }
+        }
+        developers {
+            developer {
+                id = "mayuna"
+                name = "Marek Lof"
+                email = "uwulilmayu@gmail.com"
+            }
+        }
+        scm {
+            connection = "scm:git:"
+            url = "https://github.com/iwakura-enterprises/akasha.git"
+        }
+    }
+}
+
+signing {
+    useInMemoryPgpKeys(
+            System.getenv("GPG_KEY_ID"),
+            System.getenv("GPG_PRIVATE_KEY"),
+            System.getenv("GPG_PASSWORD")
+    )
+}
+
+components.java.withVariantsFromConfiguration(configurations.shadowRuntimeElements) {
+    skip()
+}
+
+shadowJar.dependsOn javadocJar
+shadowJar.dependsOn sourcesJar
+shadowJar.dependsOn jar
+
+def generatedSrcDir = "${buildDir}/generated-src/main/java"
+
+task generateVersionClass {
+    doLast {
+        def versionClassFile = file("${generatedSrcDir}/enterprises/iwakura/modularbot/Version.java")
+        versionClassFile.parentFile.mkdirs()
+        versionClassFile.text =
+                """
+package enterprises.iwakura.kirara.akasha;
+
+/**
+ * Auto-generated version class.
+ */
+final class Version {
+
+    /**
+     * Project's current version.
+     */
+    public static final String VERSION = "${project.version}";
+    public static final String KIRARA_VERSION = "${kiraraVersion}";
+
+    private Version() {
+        // Prevent instantiation
+    }
+}
+"""
+    }
+}
+
+// Include generated sources in compilation
+sourceSets {
+    main {
+        java {
+            srcDir generatedSrcDir
+        }
+    }
+}
+
+// Make sure version class is generated before compilation
+compileJava.dependsOn generateVersionClass
