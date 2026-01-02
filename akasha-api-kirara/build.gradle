@@ -11,7 +11,7 @@ plugins {
 }
 
 group = 'enterprises.iwakura'
-version = '1.0.0'
+version = rootProject.version
 def kiraraVersion = '1.4.1'
 
 repositories {
@@ -133,7 +133,7 @@ def generatedSrcDir = "${buildDir}/generated-src/main/java"
 
 task generateVersionClass {
     doLast {
-        def versionClassFile = file("${generatedSrcDir}/enterprises/iwakura/modularbot/Version.java")
+        def versionClassFile = file("${generatedSrcDir}/enterprises/iwakura/kirara/akasha/Version.java")
         versionClassFile.parentFile.mkdirs()
         versionClassFile.text =
                 """
