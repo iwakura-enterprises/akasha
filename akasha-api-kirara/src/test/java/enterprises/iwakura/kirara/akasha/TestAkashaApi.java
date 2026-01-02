@@ -15,6 +15,7 @@ import enterprises.iwakura.kirara.gson.GsonSerializer;
 public class TestAkashaApi {
 
     @Test
+    @Disabled
     public void testAkashaApi() {
         AkashaApi api = new AkashaApi(new HttpUrlConnectionHttpCore(), new GsonSerializer(), "http://localhost:7000");
         api.setDefaultToken("write-access-token");
