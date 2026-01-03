@@ -98,3 +98,44 @@ java {
 tasks.withType(JavaCompile) {
     options.release = 21
 }
+
+
+def generatedSrcDir = "${buildDir}/generated-src/main/java"
+
+task generateVersionClass {
+    doLast {
+        def versionClassFile = file("${generatedSrcDir}/enterprises/iwakura/akasha/AkashaVersion.java")
+        versionClassFile.parentFile.mkdirs()
+        versionClassFile.text =
+                """
+package enterprises.iwakura.akasha;
+
+/**
+ * Auto-generated version class.
+ */
+public final class AkashaVersion {
+
+    /**
+     * Project's current version.
+     */
+    public static final String VERSION = "${project.version}";
+
+    private AkashaVersion() {
+        // Prevent instantiation
+    }
+}
+"""
+    }
+}
+
+// Include generated sources in compilation
+sourceSets {
+    main {
+        java {
+            srcDir generatedSrcDir
+        }
+    }
+}
+
+// Make sure version class is generated before compilation
+compileJava.dependsOn generateVersionClass
