@@ -102,7 +102,7 @@ public class DataSourceService {
 
                     responseHandlerService.respondWithReadContext(readContext, ctx);
                 } catch (HandledException exception) {
-                    responseHandlerService.respondWithMessage(ctx, 400, "Error reading from data source: " + exception.getMessage());
+                    responseHandlerService.respondWithMessage(ctx, exception.isNotFound() ? 404 : 400, "Error reading from data source: " + exception.getMessage());
                     log.warn("Handled error reading data source: {} with file path: {}: {}", dataSourceName,
                         filePath, exception.getMessage());
                 } catch (Exception exception) {
@@ -110,7 +110,7 @@ public class DataSourceService {
                     log.error("Error reading data source: {} with file path: {}", dataSourceName, filePath,
                         exception);
                 } finally {
-                    prometheusService.getCollectors().getReads().labelValues(dataSource.getName()).inc();
+                    prometheusService.getCollectors().getReads().labelValues(dataSource.getName(), filePath).inc();
                 }
             } else {
                 responseHandlerService.respondWithMessage(ctx, 500, "No handler found for data source type: " + dataSource.getType());
@@ -144,7 +144,7 @@ public class DataSourceService {
                     handler.write(dataSource, filePath, inputStream);
                     responseHandlerService.respondWithMessage(ctx, 200, "File written successfully");
                 } catch (HandledException exception) {
-                    responseHandlerService.respondWithMessage(ctx, 400, "Error writing to data source: " + exception.getMessage());
+                    responseHandlerService.respondWithMessage(ctx, exception.isNotFound() ? 404 : 400, "Error writing to data source: " + exception.getMessage());
                     log.error("Error writing to data source: {} with file path: {}: {}", dataSourceName, filePath,
                         exception.getMessage());
                 } catch (Exception exception) {
@@ -152,7 +152,7 @@ public class DataSourceService {
                     log.error("Error writing to data source: {} with file path: {}", dataSourceName, filePath,
                         exception);
                 } finally {
-                    prometheusService.getCollectors().getWrites().labelValues(dataSource.getName()).inc();
+                    prometheusService.getCollectors().getWrites().labelValues(dataSource.getName(), filePath).inc();
                 }
             } else {
                 responseHandlerService.respondWithMessage(ctx, 500, "No handler found for data source type: " + dataSource.getType());
@@ -194,14 +194,15 @@ public class DataSourceService {
         }
 
         if (!writableDataSourcesWithoutTokens.isEmpty()) {
+            var paths = writableDataSourcesWithoutTokens.substring(0, writableDataSourcesWithoutTokens.length() - 2);
+
             if (dataSourceConfiguration.isValidateWritePermissionEntriesHaveToken()) {
                 throw new IllegalStateException(("There are writable data source permission entries that do not have tokens specified, "
                     + "this could be a security risk. (To ignore this warning see ./configs/data_source.json) Affected data source paths: %s")
-                    .formatted(writableDataSourcesWithoutTokens.substring(0, writableDataSourcesWithoutTokens.length() - 2)));
+                    .formatted(paths));
             } else {
                 log.warn("There are writable data source permission entries that do not have tokens specified, "
-                    + "this could be a security risk. Affected data source paths: {}",
-                    writableDataSourcesWithoutTokens.substring(0, writableDataSourcesWithoutTokens.length() - 2));
+                    + "this could be a security risk. Affected data source paths: {}", paths);
             }
         }
     }

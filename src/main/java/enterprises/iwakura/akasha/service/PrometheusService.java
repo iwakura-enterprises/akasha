@@ -43,13 +43,13 @@ public class PrometheusService {
         private final Counter reads = Counter.builder()
             .name("akasha_reads")
             .help("Counter for read operations")
-            .labelNames("data_source")
+            .labelNames("data_source", "file_path")
             .build();
 
         private final Counter writes = Counter.builder()
             .name("akasha_writes")
             .help("Counter for write operations")
-            .labelNames("data_source")
+            .labelNames("data_source", "file_path")
             .build();
 
         public void init(PrometheusRegistry prometheusRegistry) {

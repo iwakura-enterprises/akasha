@@ -48,7 +48,7 @@ public class SftpDataSourceHandler implements DataSourceHandler<SftpDataSource>,
             return new ReadContext(inputStream, fileName, remoteFile.length());
         } catch (SFTPException sftpException) {
             switch (sftpException.getStatusCode()) {
-                case NO_SUCH_FILE, NO_SUCH_PATH -> throw new HandledException("No such file", sftpException);
+                case NO_SUCH_FILE, NO_SUCH_PATH -> throw new HandledException("No such file", sftpException).asNotFound();
                 case PERMISSION_DENIED -> throw new HandledException("Permission denied", sftpException);
             }
             throw sftpException;
@@ -68,7 +68,7 @@ public class SftpDataSourceHandler implements DataSourceHandler<SftpDataSource>,
             }
         } catch (SFTPException sftpException) {
             switch (sftpException.getStatusCode()) {
-                case NO_SUCH_FILE, NO_SUCH_PATH -> throw new HandledException("No such path", sftpException);
+                case NO_SUCH_FILE, NO_SUCH_PATH -> throw new HandledException("No such path", sftpException).asNotFound();
                 case PERMISSION_DENIED -> throw new HandledException("Permission denied", sftpException);
             }
             throw sftpException;
